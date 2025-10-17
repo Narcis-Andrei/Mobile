@@ -7,6 +7,15 @@ public class EnemyManager : MonoBehaviour
     public Transform Player;
     public GameObject EnemyPrefab;
 
+    [Header("Combat")]
+    public int EnemyMaxHP =10;
+    public float HitRadius = 0.45f;
+
+    [Header("Enemy damade to player")]
+    public float PlayerHitRadious = 0.7f;
+    public int PlayerTouchDamage = 5;
+    private PlayerHealth _playerHealth;
+
     [Header("Pool")]
     [Min(0)] public int InitialEnemyPool = 0;
 
@@ -21,13 +30,54 @@ public class EnemyManager : MonoBehaviour
     public float SeparationRadius = 1.2f;
     public float SeparationStrength = 2.5f;
     public int MaxNeighbors = 6;
-    public float PlayerPersonalSpace = 1.0f;
+    public float PlayerPersonalSpace = 0.6f;
 
     [Header("Perf")]
     public float GridCellSize = 1.0f;
     public float CullingDistance = 60f;
 
     public int AliveCount => _transforms.Count;
+
+    private readonly List<int> _hp = new();
+    private readonly List<Transform> _hpFill = new();
+
+    public void ApplyDamageAtIndex(int index, int amount)
+    {
+        if ((uint)index >= (uint)_hp.Count) return;
+
+        _hp[index] -= amount;
+        if (_hp[index] <= 0)
+        {
+            DespawnAt(index);
+            return;
+        }
+
+        var fill = _hpFill[index];
+        if (fill)
+        {
+            float frac = Mathf.Clamp01(_hp[index] / (float)EnemyMaxHP);
+            var s = fill.localScale; fill.localScale = new Vector3(frac, s.y, s.z);
+
+            var parent = fill.parent;
+            if (parent && !parent.gameObject.activeSelf) parent.gameObject.SetActive(true);
+        }
+    }
+
+    public bool TryFindEnemyWithinRadius(Vector3 from, float radius, out int hitIndex)
+    {
+        hitIndex = -1;
+        if (_positions.Count == 0) return false;
+        float r2 = radius * radius;
+
+        for (int i = 0; i < _positions.Count; i++)
+        {
+            var p = _positions[i];
+            float dx = p.x - from.x, dz = p.z - from.z;
+            float d2 = dx * dx + dz * dz;
+            if (d2 <= r2) { hitIndex = i; return true; }
+        }
+        return false;
+    }
 
     public void Prewarm(int count)
     {
@@ -36,12 +86,24 @@ public class EnemyManager : MonoBehaviour
 
     public Transform SpawnAt(Vector3 position)
     {
-        var t = _pool.Count > 0 ? _pool.Pop() : CreatePooled();
+        Transform t = _pool.Count > 0 ? _pool.Pop() : CreatePooled();
         t.gameObject.SetActive(true);
         t.SetPositionAndRotation(position, Quaternion.identity);
+
         _transforms.Add(t);
         _positions.Add(position);
         _rotations.Add(Quaternion.identity);
+        _hp.Add(EnemyMaxHP);
+
+        Transform fill = t.Find("HealthBar/EnemyHp");
+        _hpFill.Add(fill);
+
+        if (fill)
+        {
+            var s = fill.localScale; fill.localScale = new Vector3(1f, s.y, s.z);
+            var parent = fill.parent;
+            if (parent && parent.gameObject.activeSelf) parent.gameObject.SetActive(false);
+        }
         return t;
     }
 
@@ -69,10 +131,14 @@ public class EnemyManager : MonoBehaviour
             _transforms[index] = _transforms[last];
             _positions[index] = _positions[last];
             _rotations[index] = _rotations[last];
+            _hpFill[index] = _hpFill[last];
+            _hp[index] = _hp[last];
         }
         _transforms.RemoveAt(last);
         _positions.RemoveAt(last);
         _rotations.RemoveAt(last);
+        _hp.RemoveAt(last);
+        _hpFill.RemoveAt(last);
     }
 
     public void DespawnAll()
@@ -90,7 +156,7 @@ public class EnemyManager : MonoBehaviour
     void Awake()
     {
         if (!Player) Player = GameObject.FindGameObjectWithTag("Player")?.transform;
-        if (!EnemyPrefab) Debug.LogError("EnemyManager: EnemyPrefab not assigned.");
+        _playerHealth = Player ? Player.GetComponent<PlayerHealth>() : null;
         if (InitialEnemyPool > 0) Prewarm(InitialEnemyPool);
     }
 
@@ -183,6 +249,17 @@ public class EnemyManager : MonoBehaviour
                     : Quaternion.RotateTowards(_rotations[i], targetRot, turnStep);
             }
 
+            if (_playerHealth && _playerHealth.CanTakeDamage)
+            {
+                float dx = playerPos.x- pos.x;
+                float dz = playerPos.z- pos.z;
+                float distSqr = dx * dx + dz * dz;
+
+                if (distSqr <= PlayerHitRadious * PlayerHitRadious)
+                {
+                    _playerHealth.TakeDamage(PlayerTouchDamage);
+                }
+            }
             _positions[i] = pos;
         }
 
@@ -195,5 +272,33 @@ public class EnemyManager : MonoBehaviour
         var t = Instantiate(EnemyPrefab).transform;
         t.gameObject.SetActive(false);
         return t;
+    }
+
+    public bool TryGetNearestEnemy(Vector3 from, float maxRane, out Vector3 enemyPos)
+    {
+        enemyPos = Vector3.zero;
+        if (_positions.Count == 0) return false;
+
+        float maxRangeSqr = maxRane * maxRane;
+        float bestDistSqr = maxRangeSqr;
+        int bestIndex = -1;
+        for (int i = 0; i<_positions.Count; i++)
+        {
+            Vector3 p = _positions[i];
+        float distSqr = (p - from).sqrMagnitude;
+            if (distSqr<bestDistSqr)
+            {
+                bestDistSqr = distSqr;
+                bestIndex = i;
+            }
+        }
+
+        if (bestIndex >= 0)
+        {
+        enemyPos = _positions[bestIndex];
+        return true;
+        }
+
+    return false;
     }
 }

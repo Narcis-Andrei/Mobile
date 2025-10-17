@@ -6,7 +6,7 @@ public class Movement : MonoBehaviour
     private InputManager inputs;
     private Rigidbody rb;
 
-    [Header("Movement Settings")]
+    [Header("Settings for movement")]
     public float Speed = 5f;
     public float RotationSpeed = 10f;
 

@@ -5,17 +5,27 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
 
-    [Header("Menu References (children of Menus canvas)")]
+    [Header("Menu References")]
     [SerializeField] private GameObject playerUI;
     [SerializeField] private GameObject pauseMenu;
     [SerializeField] private GameObject deathScreen;
     [SerializeField] private GameObject settingsMenu;
 
-    [Header("Optional")]
+    [Header("Player health UI")]
     [SerializeField] private PlayerHealth player;
+
+    [Header("Collectables")]
+    [SerializeField] private GameObject collectablesMenu;
+    [SerializeField] private bool pauseOnCollect = true;
 
     private enum GameState { Playing, Paused, Dead }
     private GameState _state = GameState.Playing;
+    private bool _collectablesOpen = false;
+
+    private bool _pauseBySettings = false;
+
+    public bool IsCollectablesOpen => _collectablesOpen;
+
 
     private void Awake()
     {
@@ -25,9 +35,10 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
-        if (player == null) player = FindObjectOfType<PlayerHealth>();
+        if (player == null) player = FindFirstObjectByType<PlayerHealth>();
         Time.timeScale = 1f;
         ShowOnlyPlayerUI();
+        if (collectablesMenu) collectablesMenu.SetActive(false);
     }
 
     private void Update()
@@ -37,6 +48,10 @@ public class GameManager : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.Escape))
         {
+            if (_collectablesOpen)
+            {
+                HideCollectableMenu(); return;
+            }
             if (_state == GameState.Playing) Pause();
             else if (_state == GameState.Paused && settingsMenu != null && settingsMenu.activeSelf) CloseSettings();
             else if (_state == GameState.Paused) Resume();
@@ -62,6 +77,10 @@ public class GameManager : MonoBehaviour
             deathOn: true,
             settingsOn: false
         );
+
+        if (collectablesMenu) collectablesMenu.SetActive(false);
+        _collectablesOpen = false;
+        _pauseBySettings = false;
     }
 
     public void RetryRun()
@@ -75,6 +94,7 @@ public class GameManager : MonoBehaviour
         _state = GameState.Paused;
 
         Time.timeScale = 0f;
+        _pauseBySettings = false;
         SetMenus(false, true, false, false);
     }
 
@@ -84,22 +104,51 @@ public class GameManager : MonoBehaviour
         _state = GameState.Playing;
 
         Time.timeScale = 1f;
+        _pauseBySettings = false;
         ShowOnlyPlayerUI();
     }
 
     public void OpenSettings()
     {
-        if (settingsMenu != null) settingsMenu.SetActive(true);
+        if (_state == GameState.Dead) return;
+
+        if (_state == GameState.Playing)
+        {
+            Time.timeScale = 0f;
+            _state = GameState.Paused;
+            _pauseBySettings = true;
+        }
+        else
+        {
+            _pauseBySettings = false;
+        }
+
+        SetMenus(false, false, false, true);
     }
 
     public void CloseSettings()
     {
         if (settingsMenu != null) settingsMenu.SetActive(false);
+
+        if (_pauseBySettings)
+        {
+            _pauseBySettings = false;
+            _state = GameState.Playing;
+            Time.timeScale = 1f;
+            ShowOnlyPlayerUI();
+        }
+        else
+        {
+            if (_state == GameState.Paused)
+                SetMenus(false, true, false, false);
+        }
     }
 
     private void ShowOnlyPlayerUI()
     {
         SetMenus(true, false, false, false);
+        if (collectablesMenu) collectablesMenu.SetActive(false);
+        _collectablesOpen = false;
     }
 
     private void SetMenus(bool playerUiOn, bool pauseOn, bool deathOn, bool settingsOn)
@@ -108,5 +157,38 @@ public class GameManager : MonoBehaviour
         if (pauseMenu != null) pauseMenu.SetActive(pauseOn);
         if (deathScreen != null) deathScreen.SetActive(deathOn);
         if (settingsMenu != null) settingsMenu.SetActive(settingsOn);
+    }
+
+    public void ShowCollectablesMenu()
+    {
+        if (_state == GameState.Dead) return;
+
+        SetMenus(false, false, false, false);
+        if (collectablesMenu) collectablesMenu.SetActive(true);
+        _collectablesOpen = true;
+
+        if (pauseOnCollect) Time.timeScale = 0f;
+    }
+
+    public void HideCollectableMenu()
+    {
+        if (!_collectablesOpen) return;
+
+        if (collectablesMenu) collectablesMenu.SetActive(false);
+        _collectablesOpen = false;
+
+        if (pauseOnCollect && _state == GameState.Playing)
+            Time.timeScale = 1f;
+
+        ShowOnlyPlayerUI();
+    }
+
+    public void TryOpenChestByFlick(FlickDir dir)
+    {
+        if (!_collectablesOpen) return;
+
+        if (dir != FlickDir.Up) return;
+
+        HideCollectableMenu();
     }
 }

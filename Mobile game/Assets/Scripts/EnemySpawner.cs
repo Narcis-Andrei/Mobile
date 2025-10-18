@@ -26,7 +26,7 @@ public class EnemySpawner : MonoBehaviour
 
     void Start()
     {
-        if (!Manager) Manager = FindObjectOfType<EnemyManager>();
+        if (!Manager) Manager = FindFirstObjectByType<EnemyManager>();
         if (!Player) Player = GameObject.FindGameObjectWithTag("Player")?.transform;
         if (!Manager || !Player)
         {

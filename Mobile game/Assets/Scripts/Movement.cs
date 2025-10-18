@@ -5,6 +5,7 @@ public class Movement : MonoBehaviour
 {
     private InputManager inputs;
     private Rigidbody rb;
+    private DashController dash;
 
     [Header("Settings for movement")]
     public float Speed = 5f;
@@ -17,6 +18,7 @@ public class Movement : MonoBehaviour
     {
         inputs = GetComponent<InputManager>();
         rb = GetComponent<Rigidbody>();
+        dash = GetComponent<DashController>();
 
         rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
         rb.interpolation = RigidbodyInterpolation.Interpolate;
@@ -36,6 +38,8 @@ public class Movement : MonoBehaviour
     private void FixedUpdate()
     {
         if (rb == null) return;
+
+        if (dash != null && dash.IsDashing) return;
 
         Vector3 move = new Vector3(moveDirection.x, 0f, moveDirection.y);
 

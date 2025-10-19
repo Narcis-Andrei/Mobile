@@ -1,4 +1,5 @@
 using UnityEngine;
+using CandyCoded.HapticFeedback;
 
 public class Chest : MonoBehaviour
 {
@@ -23,6 +24,8 @@ public class Chest : MonoBehaviour
         if (!other.CompareTag("Player")) return;
 
         if (GameManager.Instance) GameManager.Instance.ShowCollectablesMenu();
+
+        HapticFeedback.LightFeedback();
 
         if (deactivate) gameObject.SetActive(false);
         else Destroy(gameObject);

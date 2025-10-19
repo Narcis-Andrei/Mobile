@@ -18,10 +18,10 @@ public class AccelormeterFlick : MonoBehaviour
     [Header("Accelerometer Flick")]
     public bool enablePhoneFlick = true;
 
-    public float accelerationTreshhold = 1.3f;
-    public float acceleratioCooldown = 0.7f;
-    [Range(0f, 1f)] public float accelerationSmoothing = 0.1f;
-    [Range(0f, 1f)] public float accelerationDirectionalBias = 0.25f;
+    public float accelerationTreshhold = 0.6f;
+    public float acceleratioCooldown = 0.2f;
+    [Range(0f, 1f)] public float accelerationSmoothing = 0.05f;
+    [Range(0f, 1f)] public float accelerationDirectionalBias = 0.5f;
     public bool detectWhenPause = true;
 
     public bool enableSwipe = true;
@@ -67,11 +67,11 @@ public class AccelormeterFlick : MonoBehaviour
         right.y = 0f; fwd.y = 0f; right.Normalize(); fwd.Normalize();
 
         float x = Vector3.Dot(a, right);
+        x = -x;
         float z = Vector3.Dot(a, fwd);
         float ax = Mathf.Abs(x), az = Mathf.Abs(z);
 
 #if UNITY_EDITOR
-        if (Input.GetKeyDown(KeyCode.D)) x = accelerationTreshhold + 0.2f;
         if (Input.GetKeyDown(KeyCode.A)) x = -accelerationTreshhold - 0.2f;
         if (Input.GetKeyDown(KeyCode.W)) z = accelerationTreshhold + 0.2f;
         if (Input.GetKeyDown(KeyCode.S)) z = -accelerationTreshhold - 0.2f;
@@ -175,7 +175,7 @@ public class AccelormeterFlick : MonoBehaviour
         if (worldDash.sqrMagnitude > 1e-6f)
         {
             worldDash.y = 0f;
-            onDash?.Invoke(worldDash.normalized);
+            onDash?.Invoke(worldDash);
         }
     }
 } 

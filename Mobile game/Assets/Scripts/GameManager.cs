@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using CandyCoded.HapticFeedback;
 
 public class GameManager : MonoBehaviour
 {
@@ -68,8 +69,9 @@ public class GameManager : MonoBehaviour
         if (_state == GameState.Dead) return;
         _state = GameState.Dead;
 
+        HapticFeedback.HeavyFeedback();
+
         Time.timeScale = 0f;
-        Handheld.Vibrate();
 
         SetMenus(
             playerUiOn: false,

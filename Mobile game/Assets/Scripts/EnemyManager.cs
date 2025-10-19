@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using CandyCoded.HapticFeedback;
 
 public class EnemyManager : MonoBehaviour
 {
@@ -258,6 +259,7 @@ public class EnemyManager : MonoBehaviour
                 if (distSqr <= PlayerHitRadious * PlayerHitRadious)
                 {
                     _playerHealth.TakeDamage(PlayerTouchDamage);
+                    HapticFeedback.LightFeedback();
                 }
             }
             _positions[i] = pos;

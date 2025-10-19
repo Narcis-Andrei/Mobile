@@ -1,11 +1,15 @@
 using UnityEngine;
+using CandyCoded.HapticFeedback;
+using Unity.Burst.CompilerServices;
+using UnityEngine.Rendering;
 
 public class DashController : MonoBehaviour
 {
     [Header("Dash Settings")]
-    public float dashSpeed = 20f;
+    public float dashSpeed = 30f;
     public float dashDuration = 0.15f;
-    public float dashCooldown = 0.5f;
+    public float dashCooldown = 0.1f;
+    public float dashDistance = 8f;
     public AnimationCurve speedCurve = AnimationCurve.EaseInOut(0, 1, 1, 1);
     public bool IsDashing => _isDashing;
 
@@ -30,22 +34,31 @@ public class DashController : MonoBehaviour
 
     public void DoDash(Vector3 worldDirection)
     {
-        if (_isDashing || _cooldownTimer > 0f)
+        if (_isDashing || _cooldownTimer > 0f || Time.timeScale == 0f)
             return;
 
         worldDirection.y = 0f;
         if (worldDirection.sqrMagnitude < 0.01f) return;
-        worldDirection.Normalize();
 
-        StartCoroutine(DashRoutine(worldDirection));
+        const float minPower = 0.5f;
+        const float maxPower = 2.0f;
+
+        float power = Mathf.Clamp(worldDirection.magnitude, minPower, maxPower);
+        Vector3 dir = worldDirection.normalized;
+        
+        float baseSpeed = dashDistance / dashDuration;
+
+        StartCoroutine(DashRoutine(dir, power, baseSpeed));
 
         _cooldownTimer = dashCooldown;
+
+        HapticFeedback.MediumFeedback();
 
         if (dashEffect) dashEffect.Play();
         if (dashSound) dashSound.Play();
     }
 
-    private System.Collections.IEnumerator DashRoutine(Vector3 dir)
+    private System.Collections.IEnumerator DashRoutine(Vector3 dir, float power, float baseSpeed)
     {
         _isDashing = true;
         float elapsed = 0f;
@@ -57,13 +70,13 @@ public class DashController : MonoBehaviour
 
         while (elapsed < dashDuration)
         {
-            elapsed += Time.deltaTime;
+            elapsed += Time.fixedDeltaTime;
             float t = Mathf.Clamp01(elapsed / dashDuration);
             float curve = speedCurve != null ? speedCurve.Evaluate(t) : 1f;
 
-            Vector3 step = dir * (dashSpeed * curve * Time.fixedDeltaTime);
+            Vector3 step = dir * (dashSpeed * power * curve * Time.fixedDeltaTime);
             _rb.MovePosition(_rb.position + step);
-            yield return null;
+            yield return wait;
         }
 
         _rb.useGravity = hadGravity;

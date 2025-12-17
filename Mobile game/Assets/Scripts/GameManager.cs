@@ -22,7 +22,7 @@ public class GameManager : MonoBehaviour
     private enum GameState { Playing, Paused, Dead }
     private GameState _state = GameState.Playing;
     private bool _collectablesOpen = false;
-
+    private bool _rewardRevealed = false;
     private bool _pauseBySettings = false;
 
     public bool IsCollectablesOpen => _collectablesOpen;
@@ -169,6 +169,9 @@ public class GameManager : MonoBehaviour
         if (collectablesMenu) collectablesMenu.SetActive(true);
         _collectablesOpen = true;
 
+        _rewardRevealed = false;
+        collectablesMenu?.GetComponentInChildren<ChestRewardMenu>(true)?.OnMenuOpened();
+
         if (pauseOnCollect) Time.timeScale = 0f;
     }
 
@@ -178,19 +181,30 @@ public class GameManager : MonoBehaviour
 
         if (collectablesMenu) collectablesMenu.SetActive(false);
         _collectablesOpen = false;
+        _rewardRevealed = false;
 
         if (pauseOnCollect && _state == GameState.Playing)
             Time.timeScale = 1f;
 
-        ShowOnlyPlayerUI();
+        SetMenus(true, false, false, false);
+    }
+
+    public void OnChestOptionChosen(RewardType reward, Rarity rarity)
+    {
+        var stats = player ? player.GetComponent<PlayerStats>() : null;
+        if (stats && player)
+            stats.ApplyReward(reward, rarity, player);
+
+        HideCollectableMenu();
     }
 
     public void TryOpenChestByFlick(FlickDir dir)
     {
         if (!_collectablesOpen) return;
-
         if (dir != FlickDir.Up) return;
 
-        HideCollectableMenu();
+        collectablesMenu
+            ?.GetComponentInChildren<ChestRewardMenu>(true)
+            ?.OpenChests();
     }
 }

@@ -46,4 +46,18 @@ public class PlayerHealth : MonoBehaviour
     {
         if (HpFill) HpFill.fillAmount = Mathf.Clamp01(CurrentHP / (float)MaxHP);
     }
+
+    public void AddMaxHP(int amount, bool alsoHealByAmount = true)
+    {
+        if (amount <= 0) return;
+
+        MaxHP += amount;
+
+        if (alsoHealByAmount)
+            CurrentHP += amount;
+
+        CurrentHP = Mathf.Clamp(CurrentHP, 0, MaxHP);
+        UpdateUI();
+    }
+
 }

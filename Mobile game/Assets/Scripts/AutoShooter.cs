@@ -5,6 +5,7 @@ public class AutoShooter : MonoBehaviour
     [Header("References")]
     public EnemyManager EnameManager;
     public ProjectileManager ProjectileManager;
+    public PlayerStats stats;
 
     [Header("Weapon")]
     [Min(0.1f)] public float FireRate = 2f;
@@ -14,6 +15,11 @@ public class AutoShooter : MonoBehaviour
     public int ProjectileDamage = 5;
 
     float cooldown;
+
+    private void Awake()
+    {
+        if (!stats) stats = GetComponent<PlayerStats>();
+    }
 
     private void Update()
     {
@@ -33,9 +39,12 @@ public class AutoShooter : MonoBehaviour
             {
                 dir.Normalize();
 
-                ProjectileManager.Fire(origin, dir, ProjectileSpeed, ProjectileLifetime,ProjectileDamage);
-                cooldown = 1f / FireRate;
+                ProjectileManager.Fire(origin, dir, ProjectileSpeed, ProjectileLifetime, ProjectileDamage);
+
+                float mult = stats ? stats.fireRateMultiplier : 1f;
+                float effectiveFireRate = Mathf.Max(0.1f, FireRate * mult);
+                cooldown = 1f / effectiveFireRate;
             }
-        }    
+        }
     }
 }

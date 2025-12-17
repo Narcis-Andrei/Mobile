@@ -11,6 +11,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private GameObject pauseMenu;
     [SerializeField] private GameObject deathScreen;
     [SerializeField] private GameObject settingsMenu;
+    [SerializeField] private GameObject statsMenu;
 
     [Header("Player health UI")]
     [SerializeField] private PlayerHealth player;
@@ -24,6 +25,7 @@ public class GameManager : MonoBehaviour
     private bool _collectablesOpen = false;
     private bool _rewardRevealed = false;
     private bool _pauseBySettings = false;
+    private StatsTracker _runStats;
 
     public bool IsCollectablesOpen => _collectablesOpen;
 
@@ -36,8 +38,11 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
+        _runStats = FindFirstObjectByType<StatsTracker>();
         if (player == null) player = FindFirstObjectByType<PlayerHealth>();
         Time.timeScale = 1f;
+        if (statsMenu) statsMenu.SetActive(true);
+
         ShowOnlyPlayerUI();
         if (collectablesMenu) collectablesMenu.SetActive(false);
     }
@@ -69,6 +74,8 @@ public class GameManager : MonoBehaviour
         if (_state == GameState.Dead) return;
         _state = GameState.Dead;
 
+        _runStats?.OnRunEnded();
+
         HapticFeedback.HeavyFeedback();
 
         Time.timeScale = 0f;
@@ -79,6 +86,8 @@ public class GameManager : MonoBehaviour
             deathOn: true,
             settingsOn: false
         );
+
+        if (statsMenu) statsMenu.SetActive(false);
 
         if (collectablesMenu) collectablesMenu.SetActive(false);
         _collectablesOpen = false;
@@ -149,6 +158,9 @@ public class GameManager : MonoBehaviour
     private void ShowOnlyPlayerUI()
     {
         SetMenus(true, false, false, false);
+
+        if (statsMenu) statsMenu.SetActive(true);
+
         if (collectablesMenu) collectablesMenu.SetActive(false);
         _collectablesOpen = false;
     }

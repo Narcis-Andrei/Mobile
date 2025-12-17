@@ -92,7 +92,7 @@ public class ChestRewardMenu : MonoBehaviour
                 type = all[Random.Range(0, all.Length)];
                 guard++;
             }
-            while (guard < 100 && (i > 0 && type == CurrentRewards[0]) || (i > 1 && type == CurrentRewards[1]));
+            while (guard < 100 && ((i > 0 && type == CurrentRewards[0]) || (i > 1 && type == CurrentRewards[1])));
 
             CurrentRewards[i] = type;
             CurrentRarities[i] = RollRarity();
@@ -149,6 +149,30 @@ public class ChestRewardMenu : MonoBehaviour
 
             case RewardType.DashCooldown:
                 return $"-{Mathf.RoundToInt(10 * rarityMult)}% Dash Cooldown";
+
+            case RewardType.Projectiles:
+                {
+                    int add = rarity switch
+                    {
+                        Rarity.Common => 1,
+                        Rarity.Uncommon => 2,
+                        Rarity.Rare => 3,
+                        Rarity.Epic => 4,
+                        Rarity.Legendary => 5,
+                        _ => 1
+                    };
+
+                    return $"+{add} Projectile{(add > 1 ? "s" : "")}";
+                }
+
+            case RewardType.DashRecharge:
+                return $"-{Mathf.RoundToInt(10 * rarityMult)}% Dash Reload";
+
+            case RewardType.CritChance:
+                return $"+{Mathf.RoundToInt(2 * rarityMult)}% Crit Chance";
+
+            case RewardType.CritDamage:
+                return $"+{Mathf.RoundToInt(15 * rarityMult)}% Crit Damage";
         }
 
         return "Reward";

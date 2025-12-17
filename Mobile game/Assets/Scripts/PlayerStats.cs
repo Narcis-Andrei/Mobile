@@ -7,8 +7,13 @@ public class PlayerStats : MonoBehaviour
     public float fireRateMultiplier = 1f;
     public float dashCooldownMultiplier = 1f;
 
-    [Header("Flat bonuses")]
+    [Header("Stats")]
     public int bonusMaxHP = 0;
+    [Min(1)] public int projectileCount = 1;
+    [Range(1, 4)] public int maxDashCharges = 4;
+    [Min(0.05f)] public float dashRechargeTime = 1.25f;
+    [Range(0f, 1f)] public float critChance = 0f;
+    [Min(1f)] public float critDamage = 1.5f;
 
     public void ApplyReward(RewardType reward, Rarity rarity, PlayerHealth health)
     {
@@ -57,6 +62,45 @@ public class PlayerStats : MonoBehaviour
                     dashCooldownMultiplier = Mathf.Clamp(dashCooldownMultiplier, 0.4f, 1f);
                     break;
                 }
+            case RewardType.Projectiles:
+                {
+                    int add = rarity switch
+                    {
+                        Rarity.Common => 1,
+                        Rarity.Uncommon => 2,
+                        Rarity.Rare => 3,
+                        Rarity.Epic => 4,
+                        Rarity.Legendary => 5,
+                        _ => 1
+                    };
+
+                    projectileCount += add;
+                    projectileCount = Mathf.Clamp(projectileCount, 1, 20);
+                    break;
+                }
+
+            case RewardType.DashRecharge:
+                {
+                    float baseReduction = 0.10f;
+                    dashRechargeTime *= (1f - baseReduction * rarityMult);
+                    dashRechargeTime = Mathf.Clamp(dashRechargeTime, 0.25f, 5f);
+                    break;
+                }
+
+            case RewardType.CritChance:
+                {
+                    float add = 0.02f * rarityMult;
+                    critChance = Mathf.Clamp01(critChance + add);
+                    break;
+                }
+
+            case RewardType.CritDamage:
+                {
+                    float add = 0.10f * rarityMult;
+                    critDamage = Mathf.Clamp(critDamage + add, 1f, 5f);
+                    break;
+                }
         }
     }
 }
+

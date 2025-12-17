@@ -9,6 +9,7 @@ public class ProjectileManager : MonoBehaviour
 
     [Header("References")]
     public EnemyManager enemyManager;
+    public PlayerStats playerStats;
 
     private readonly List<Transform> _projectiles = new();
     private readonly List<Vector3> _positions = new();
@@ -19,6 +20,8 @@ public class ProjectileManager : MonoBehaviour
 
     void Awake()
     {
+        if (!playerStats) playerStats = FindFirstObjectByType<PlayerStats>();
+
         for (int i = 0; i < initialPoolSize; i++)
             _pool.Push(CreateProjectile());
     }
@@ -62,7 +65,14 @@ public class ProjectileManager : MonoBehaviour
 
             if (enemyManager && enemyManager.TryFindEnemyWithinRadius(_positions[i], enemyManager.HitRadius, out int hitIdx))
             {
-                enemyManager.ApplyDamageAtIndex(hitIdx, _damage[i]);
+                int dmg = _damage[i];
+
+                if (playerStats && playerStats.critChance > 0f && Random.value < playerStats.critChance)
+                {
+                    dmg = Mathf.RoundToInt(dmg * Mathf.Max(1f, playerStats.critDamage));
+                }
+
+                enemyManager.ApplyDamageAtIndex(hitIdx, dmg);
                 Despawn(i);
             }
         }

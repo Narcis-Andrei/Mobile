@@ -30,21 +30,36 @@ public class AutoShooter : MonoBehaviour
 
         Vector3 origin = transform.position;
 
-        if (EnameManager.TryGetNearestEnemy(origin, Range, out var targetPos))
+        int shots = stats ? Mathf.Max(1, stats.projectileCount) : 1;
+
+        var used = new System.Collections.Generic.HashSet<int>();
+
+        int fired = 0;
+
+        for (int i = 0; i < shots; i++)
         {
+            if (!EnameManager.TryGetRandomEnemyWithinRange(origin, Range, used, out var targetPos, out int idx))
+                break;
+
+            used.Add(idx);
+
             Vector3 dir = targetPos - origin;
             dir.y = 0f;
 
-            if (dir.sqrMagnitude > 1e-6f)
-            {
-                dir.Normalize();
+            if (dir.sqrMagnitude <= 1e-6f)
+                continue;
 
-                ProjectileManager.Fire(origin, dir, ProjectileSpeed, ProjectileLifetime, ProjectileDamage);
+            dir.Normalize();
 
-                float mult = stats ? stats.fireRateMultiplier : 1f;
-                float effectiveFireRate = Mathf.Max(0.1f, FireRate * mult);
-                cooldown = 1f / effectiveFireRate;
-            }
+            ProjectileManager.Fire(origin, dir, ProjectileSpeed, ProjectileLifetime, ProjectileDamage);
+            fired++;
+        }
+
+        if (fired > 0)
+        {
+            float mult = stats ? stats.fireRateMultiplier : 1f;
+            float effectiveFireRate = Mathf.Max(0.1f, FireRate * mult);
+            cooldown = 1f / effectiveFireRate;
         }
     }
 }

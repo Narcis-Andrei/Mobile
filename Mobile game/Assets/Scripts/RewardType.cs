@@ -6,5 +6,9 @@ public enum RewardType
     Heal,
     FireRate,
     MoveSpeed,
-    DashCooldown
+    DashCooldown,
+    Projectiles,
+    DashRecharge,
+    CritChance,
+    CritDamage
 }

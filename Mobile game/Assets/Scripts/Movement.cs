@@ -45,7 +45,14 @@ public class Movement : MonoBehaviour
 
         if (move.sqrMagnitude < 1e-6f) return;
 
-        rb.MovePosition(rb.position + move * Speed * Time.fixedDeltaTime);
+        float speedMultiplier = 1f;
+        var stats = GetComponent<PlayerStats>();
+        if (stats != null)
+            speedMultiplier = stats.moveSpeedMultiplier;
+
+        rb.MovePosition(
+            rb.position + move * Speed * speedMultiplier * Time.fixedDeltaTime
+        );
 
         Rotate(move);
     }

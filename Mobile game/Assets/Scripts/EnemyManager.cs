@@ -7,6 +7,7 @@ public class EnemyManager : MonoBehaviour
     [Header("References")]
     public Transform Player;
     public GameObject EnemyPrefab;
+    public StatsTracker runStats;
 
     [Header("Combat")]
     public int EnemyMaxHP =10;
@@ -46,9 +47,13 @@ public class EnemyManager : MonoBehaviour
     {
         if ((uint)index >= (uint)_hp.Count) return;
 
+        if (_hp[index] <= 0) return;
+
         _hp[index] -= amount;
+
         if (_hp[index] <= 0)
         {
+            runStats?.AddKill(1);
             DespawnAt(index);
             return;
         }
@@ -57,10 +62,12 @@ public class EnemyManager : MonoBehaviour
         if (fill)
         {
             float frac = Mathf.Clamp01(_hp[index] / (float)EnemyMaxHP);
-            var s = fill.localScale; fill.localScale = new Vector3(frac, s.y, s.z);
+            var s = fill.localScale;
+            fill.localScale = new Vector3(frac, s.y, s.z);
 
             var parent = fill.parent;
-            if (parent && !parent.gameObject.activeSelf) parent.gameObject.SetActive(true);
+            if (parent && !parent.gameObject.activeSelf)
+                parent.gameObject.SetActive(true);
         }
     }
 
@@ -159,6 +166,7 @@ public class EnemyManager : MonoBehaviour
         if (!Player) Player = GameObject.FindGameObjectWithTag("Player")?.transform;
         _playerHealth = Player ? Player.GetComponent<PlayerHealth>() : null;
         if (InitialEnemyPool > 0) Prewarm(InitialEnemyPool);
+        if (!runStats) runStats = FindFirstObjectByType<StatsTracker>();
     }
 
     void Update()
@@ -302,5 +310,46 @@ public class EnemyManager : MonoBehaviour
         }
 
     return false;
+    }
+
+    public bool TryGetRandomEnemyWithinRange(
+    Vector3 from,
+    float maxRange,
+    System.Collections.Generic.HashSet<int> exclude,
+    out Vector3 enemyPos,
+    out int enemyIndex
+)
+    {
+        enemyPos = Vector3.zero;
+        enemyIndex = -1;
+
+        if (_positions.Count == 0) return false;
+
+        float maxRangeSqr = maxRange * maxRange;
+
+        int picked = -1;
+        int seen = 0;
+
+        for (int i = 0; i < _positions.Count; i++)
+        {
+            if (exclude != null && exclude.Contains(i)) continue;
+
+            Vector3 p = _positions[i];
+            float dx = p.x - from.x;
+            float dz = p.z - from.z;
+            float d2 = dx * dx + dz * dz;
+
+            if (d2 > maxRangeSqr) continue;
+
+            seen++;
+            if (Random.Range(0, seen) == 0)
+                picked = i;
+        }
+
+        if (picked < 0) return false;
+
+        enemyIndex = picked;
+        enemyPos = _positions[picked];
+        return true;
     }
 }

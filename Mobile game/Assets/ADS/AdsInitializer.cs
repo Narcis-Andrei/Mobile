@@ -1,11 +1,17 @@
 using UnityEngine;
 using UnityEngine.Advertisements;
+using static UnityEngine.Advertisements.Advertisement;
 
 public class AdsInitializer : MonoBehaviour, IUnityAdsInitializationListener
 {
     [SerializeField] string _androidGameId;
     [SerializeField] string _iOSGameId;
     [SerializeField] bool _testMode = true;
+
+    [Header("Optional")]
+    [SerializeField] InterstitialAd interstitial;
+    [SerializeField] BannerAd banner;
+
     private string _gameId;
 
     void Awake()
@@ -20,7 +26,7 @@ public class AdsInitializer : MonoBehaviour, IUnityAdsInitializationListener
 #elif UNITY_ANDROID
         _gameId = _androidGameId;
 #elif UNITY_EDITOR
-    _gameId = _androidGameId; //Only for testing the functionality in the Editor
+    _gameId = _androidGameId;
 #endif
 
         if (!Advertisement.isInitialized && Advertisement.isSupported)
@@ -32,6 +38,11 @@ public class AdsInitializer : MonoBehaviour, IUnityAdsInitializationListener
     public void OnInitializationComplete()
     {
         Debug.Log("Unity Ads initialization complete.");
+
+        if (!interstitial) interstitial = GetComponent<InterstitialAd>();
+        if (!banner) banner = GetComponent<BannerAd>();
+
+        interstitial?.LoadAd();
     }
 
     public void OnInitializationFailed(UnityAdsInitializationError error, string message)

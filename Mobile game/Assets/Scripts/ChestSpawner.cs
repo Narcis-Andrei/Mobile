@@ -42,7 +42,7 @@ public class ChestSpawner : MonoBehaviour
         Vector2 dir = Random.insideUnitCircle.normalized;
         Vector3 pos = player.position + new Vector3(dir.x, 0f, dir.y) * spawnRadius;
 
-        var go = Instantiate(chestPrefab, pos, Quaternion.identity);
+        var go = Instantiate(chestPrefab, pos, Quaternion.identity, transform);
         _active.Add(go);
     }
 

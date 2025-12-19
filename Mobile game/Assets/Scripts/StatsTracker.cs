@@ -9,7 +9,7 @@ public class StatsTracker : MonoBehaviour
     public TMP_Text attemptsText;
     public TMP_Text bestText;
 
-    [Header("Top HUD (recommended: only use hpText)")]
+    [Header("Top HUD")]
     public TMP_Text hpText;
 
     [Header("Player Stat UI")]
@@ -17,14 +17,14 @@ public class StatsTracker : MonoBehaviour
     public TMP_Text fireRateText;
     public TMP_Text dashCooldownText;
 
-    [Header("New Stat UI (optional)")]
+    [Header("Stat UI")]
     public TMP_Text dashesText;
     public TMP_Text dashRechargeText;
     public TMP_Text projectilesText;
     public TMP_Text critChanceText;
     public TMP_Text critDamageText;
 
-    [Header("Refs (optional)")]
+    [Header("References")]
     public PlayerStats playerStats;
     public PlayerHealth playerHealth;
     public DashController dashController;

@@ -11,6 +11,9 @@ public class Movement : MonoBehaviour
     public float Speed = 5f;
     public float RotationSpeed = 10f;
 
+    [Header("Caps")]
+    public float MaxMoveSpeedMultiplier = 2f;
+
     private Vector2 moveDirection;
     private bool isMoving;
 
@@ -38,17 +41,15 @@ public class Movement : MonoBehaviour
     private void FixedUpdate()
     {
         if (rb == null) return;
-
         if (dash != null && dash.IsDashing) return;
 
         Vector3 move = new Vector3(moveDirection.x, 0f, moveDirection.y);
-
         if (move.sqrMagnitude < 1e-6f) return;
 
         float speedMultiplier = 1f;
         var stats = GetComponent<PlayerStats>();
         if (stats != null)
-            speedMultiplier = stats.moveSpeedMultiplier;
+            speedMultiplier = Mathf.Min(stats.moveSpeedMultiplier, MaxMoveSpeedMultiplier);
 
         rb.MovePosition(
             rb.position + move * Speed * speedMultiplier * Time.fixedDeltaTime

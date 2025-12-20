@@ -32,36 +32,40 @@ public class PlayerStats : MonoBehaviour
             case RewardType.MaxHealth:
                 {
                     int baseHp = 5;
-                    int amount = Mathf.RoundToInt(baseHp * rarityMult);
+                    int amount = Mathf.CeilToInt(baseHp * rarityMult);
                     health.AddMaxHP(amount);
                     break;
                 }
+
             case RewardType.Heal:
                 {
                     int baseHeal = 8;
-                    int amount = Mathf.RoundToInt(baseHeal * rarityMult);
+                    int amount = Mathf.CeilToInt(baseHeal * rarityMult);
                     health.Heal(amount);
                     break;
                 }
+
             case RewardType.FireRate:
                 {
                     float baseBonus = 0.10f;
                     fireRateMultiplier *= (1f + baseBonus * rarityMult);
                     break;
                 }
+
             case RewardType.MoveSpeed:
                 {
                     float baseBonus = 0.08f;
                     moveSpeedMultiplier *= (1f + baseBonus * rarityMult);
                     break;
                 }
+
             case RewardType.DashCooldown:
                 {
                     float baseReduction = 0.10f;
                     dashCooldownMultiplier *= (1f - baseReduction * rarityMult);
-                    dashCooldownMultiplier = Mathf.Clamp(dashCooldownMultiplier, 0.4f, 1f);
                     break;
                 }
+
             case RewardType.Projectiles:
                 {
                     int add = rarity switch
@@ -75,7 +79,6 @@ public class PlayerStats : MonoBehaviour
                     };
 
                     projectileCount += add;
-                    projectileCount = Mathf.Clamp(projectileCount, 1, 20);
                     break;
                 }
 
@@ -83,13 +86,21 @@ public class PlayerStats : MonoBehaviour
                 {
                     float baseReduction = 0.10f;
                     dashRechargeTime *= (1f - baseReduction * rarityMult);
-                    dashRechargeTime = Mathf.Clamp(dashRechargeTime, 0.25f, 5f);
                     break;
                 }
 
             case RewardType.CritChance:
                 {
-                    float add = 0.02f * rarityMult;
+                    float add = rarity switch
+                    {
+                        Rarity.Common => 0.005f,
+                        Rarity.Uncommon => 0.010f,
+                        Rarity.Rare => 0.02f,
+                        Rarity.Epic => 0.035f,
+                        Rarity.Legendary => 0.04f,
+                        _ => 0.005f
+                    };
+
                     critChance = Mathf.Clamp01(critChance + add);
                     break;
                 }
@@ -97,7 +108,7 @@ public class PlayerStats : MonoBehaviour
             case RewardType.CritDamage:
                 {
                     float add = 0.10f * rarityMult;
-                    critDamage = Mathf.Clamp(critDamage + add, 1f, 5f);
+                    critDamage += add;
                     break;
                 }
         }

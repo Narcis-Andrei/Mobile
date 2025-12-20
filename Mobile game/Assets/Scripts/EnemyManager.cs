@@ -10,12 +10,13 @@ public class EnemyManager : MonoBehaviour
     public StatsTracker runStats;
 
     [Header("Combat")]
-    public int EnemyMaxHP =10;
+    public int EnemyMaxHP = 10;
     public float HitRadius = 0.45f;
 
-    [Header("Enemy damade to player")]
+    [Header("Enemy damage to player")]
     public float PlayerHitRadious = 0.7f;
     public int PlayerTouchDamage = 5;
+    public float TouchDamageCooldown = 0.25f;
     private PlayerHealth _playerHealth;
 
     [Header("Pool")]
@@ -40,13 +41,32 @@ public class EnemyManager : MonoBehaviour
 
     public int AliveCount => _transforms.Count;
 
+    public int CurrentEnemyHPOnSpawn { get; set; }
+
+    private readonly List<int> _maxHp = new();
     private readonly List<int> _hp = new();
     private readonly List<Transform> _hpFill = new();
+    private readonly List<float> _nextTouchDamageTime = new();
+
+    private readonly List<Transform> _transforms = new();
+    private readonly List<Vector3> _positions = new();
+    private readonly List<Quaternion> _rotations = new();
+    private readonly Stack<Transform> _pool = new();
+
+    private readonly Dictionary<(int x, int z), List<int>> _grid = new(1024);
+
+    void Awake()
+    {
+        if (!Player) Player = GameObject.FindGameObjectWithTag("Player")?.transform;
+        _playerHealth = Player ? Player.GetComponent<PlayerHealth>() : null;
+        if (InitialEnemyPool > 0) Prewarm(InitialEnemyPool);
+        if (!runStats) runStats = FindFirstObjectByType<StatsTracker>();
+        CurrentEnemyHPOnSpawn = EnemyMaxHP;
+    }
 
     public void ApplyDamageAtIndex(int index, int amount)
     {
         if ((uint)index >= (uint)_hp.Count) return;
-
         if (_hp[index] <= 0) return;
 
         _hp[index] -= amount;
@@ -61,7 +81,7 @@ public class EnemyManager : MonoBehaviour
         var fill = _hpFill[index];
         if (fill)
         {
-            float frac = Mathf.Clamp01(_hp[index] / (float)EnemyMaxHP);
+            float frac = Mathf.Clamp01(_hp[index] / (float)Mathf.Max(1, _maxHp[index]));
             var s = fill.localScale;
             fill.localScale = new Vector3(frac, s.y, s.z);
 
@@ -101,7 +121,11 @@ public class EnemyManager : MonoBehaviour
         _transforms.Add(t);
         _positions.Add(position);
         _rotations.Add(Quaternion.identity);
-        _hp.Add(EnemyMaxHP);
+
+        int hpOnSpawn = Mathf.Max(1, CurrentEnemyHPOnSpawn > 0 ? CurrentEnemyHPOnSpawn : EnemyMaxHP);
+        _hp.Add(hpOnSpawn);
+        _maxHp.Add(hpOnSpawn);
+        _nextTouchDamageTime.Add(0f);
 
         Transform fill = t.Find("HealthBar/EnemyHp");
         _hpFill.Add(fill);
@@ -112,6 +136,7 @@ public class EnemyManager : MonoBehaviour
             var parent = fill.parent;
             if (parent && parent.gameObject.activeSelf) parent.gameObject.SetActive(false);
         }
+
         return t;
     }
 
@@ -141,32 +166,22 @@ public class EnemyManager : MonoBehaviour
             _rotations[index] = _rotations[last];
             _hpFill[index] = _hpFill[last];
             _hp[index] = _hp[last];
+            _maxHp[index] = _maxHp[last];
+            _nextTouchDamageTime[index] = _nextTouchDamageTime[last];
         }
+
         _transforms.RemoveAt(last);
         _positions.RemoveAt(last);
         _rotations.RemoveAt(last);
         _hp.RemoveAt(last);
+        _maxHp.RemoveAt(last);
         _hpFill.RemoveAt(last);
+        _nextTouchDamageTime.RemoveAt(last);
     }
 
     public void DespawnAll()
     {
         for (int i = _transforms.Count - 1; i >= 0; i--) DespawnAt(i);
-    }
-
-    private readonly List<Transform> _transforms = new();
-    private readonly List<Vector3> _positions = new();
-    private readonly List<Quaternion> _rotations = new();
-    private readonly Stack<Transform> _pool = new();
-
-    private readonly Dictionary<(int x, int z), List<int>> _grid = new(1024);
-
-    void Awake()
-    {
-        if (!Player) Player = GameObject.FindGameObjectWithTag("Player")?.transform;
-        _playerHealth = Player ? Player.GetComponent<PlayerHealth>() : null;
-        if (InitialEnemyPool > 0) Prewarm(InitialEnemyPool);
-        if (!runStats) runStats = FindFirstObjectByType<StatsTracker>();
     }
 
     void Update()
@@ -191,6 +206,9 @@ public class EnemyManager : MonoBehaviour
 
         float sepRadius = Mathf.Max(0.01f, SeparationRadius);
         float sepRadiusSqr = sepRadius * sepRadius;
+
+        float touchR2 = PlayerHitRadious * PlayerHitRadious;
+        float now = Time.time;
 
         for (int i = 0; i < _positions.Count; i++)
         {
@@ -232,7 +250,8 @@ public class EnemyManager : MonoBehaviour
                         if (distSqr < sepRadiusSqr && distSqr > 1e-8f)
                         {
                             float invDist = 1f / Mathf.Sqrt(distSqr);
-                            float weight = 1f - (Mathf.Sqrt(distSqr) / sepRadius);
+                            float dist = Mathf.Sqrt(distSqr);
+                            float weight = 1f - (dist / sepRadius);
                             separationDir.x -= offsetX * invDist * weight;
                             separationDir.z -= offsetZ * invDist * weight;
 
@@ -260,16 +279,18 @@ public class EnemyManager : MonoBehaviour
 
             if (_playerHealth && _playerHealth.CanTakeDamage)
             {
-                float dx = playerPos.x- pos.x;
-                float dz = playerPos.z- pos.z;
+                float dx = playerPos.x - pos.x;
+                float dz = playerPos.z - pos.z;
                 float distSqr = dx * dx + dz * dz;
 
-                if (distSqr <= PlayerHitRadious * PlayerHitRadious)
+                if (distSqr <= touchR2 && now >= _nextTouchDamageTime[i])
                 {
+                    _nextTouchDamageTime[i] = now + TouchDamageCooldown;
                     _playerHealth.TakeDamage(PlayerTouchDamage);
                     HapticFeedback.LightFeedback();
                 }
             }
+
             _positions[i] = pos;
         }
 
@@ -284,46 +305,89 @@ public class EnemyManager : MonoBehaviour
         return t;
     }
 
-    public bool TryGetNearestEnemy(Vector3 from, float maxRane, out Vector3 enemyPos)
+    public bool TryGetNearestEnemy(Vector3 from, float maxRange, out Vector3 enemyPos)
     {
         enemyPos = Vector3.zero;
         if (_positions.Count == 0) return false;
 
-        float maxRangeSqr = maxRane * maxRane;
+        float maxRangeSqr = maxRange * maxRange;
         float bestDistSqr = maxRangeSqr;
         int bestIndex = -1;
-        for (int i = 0; i<_positions.Count; i++)
+
+        for (int i = 0; i < _positions.Count; i++)
         {
             Vector3 p = _positions[i];
-        float distSqr = (p - from).sqrMagnitude;
-            if (distSqr<bestDistSqr)
+            float dx = p.x - from.x;
+            float dz = p.z - from.z;
+            float d2 = dx * dx + dz * dz;
+
+            if (d2 < bestDistSqr)
             {
-                bestDistSqr = distSqr;
+                bestDistSqr = d2;
                 bestIndex = i;
             }
         }
 
         if (bestIndex >= 0)
         {
-        enemyPos = _positions[bestIndex];
-        return true;
+            enemyPos = _positions[bestIndex];
+            return true;
         }
 
-    return false;
+        return false;
     }
 
-    public bool TryGetRandomEnemyWithinRange(
-    Vector3 from,
-    float maxRange,
-    System.Collections.Generic.HashSet<int> exclude,
-    out Vector3 enemyPos,
-    out int enemyIndex
-)
+    public bool TryGetNearestEnemyWithinRange(
+        Vector3 from,
+        float maxRange,
+        HashSet<int> exclude,
+        out Vector3 enemyPos,
+        out int enemyIndex
+    )
     {
         enemyPos = Vector3.zero;
         enemyIndex = -1;
 
-        if (_positions.Count == 0) return false;
+        if (_positions.Count == 0)
+            return false;
+
+        float maxRangeSqr = maxRange * maxRange;
+        float bestDistSqr = maxRangeSqr;
+
+        for (int i = 0; i < _positions.Count; i++)
+        {
+            if (exclude != null && exclude.Contains(i))
+                continue;
+
+            Vector3 p = _positions[i];
+            float dx = p.x - from.x;
+            float dz = p.z - from.z;
+            float d2 = dx * dx + dz * dz;
+
+            if (d2 < bestDistSqr)
+            {
+                bestDistSqr = d2;
+                enemyIndex = i;
+                enemyPos = p;
+            }
+        }
+
+        return enemyIndex >= 0;
+    }
+
+    public bool TryGetRandomEnemyWithinRange(
+        Vector3 from,
+        float maxRange,
+        HashSet<int> exclude,
+        out Vector3 enemyPos,
+        out int enemyIndex
+    )
+    {
+        enemyPos = Vector3.zero;
+        enemyIndex = -1;
+
+        if (_positions.Count == 0)
+            return false;
 
         float maxRangeSqr = maxRange * maxRange;
 
@@ -332,21 +396,24 @@ public class EnemyManager : MonoBehaviour
 
         for (int i = 0; i < _positions.Count; i++)
         {
-            if (exclude != null && exclude.Contains(i)) continue;
+            if (exclude != null && exclude.Contains(i))
+                continue;
 
             Vector3 p = _positions[i];
             float dx = p.x - from.x;
             float dz = p.z - from.z;
             float d2 = dx * dx + dz * dz;
 
-            if (d2 > maxRangeSqr) continue;
+            if (d2 > maxRangeSqr)
+                continue;
 
             seen++;
             if (Random.Range(0, seen) == 0)
                 picked = i;
         }
 
-        if (picked < 0) return false;
+        if (picked < 0)
+            return false;
 
         enemyIndex = picked;
         enemyPos = _positions[picked];

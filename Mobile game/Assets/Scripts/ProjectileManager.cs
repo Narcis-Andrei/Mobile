@@ -5,7 +5,7 @@ public class ProjectileManager : MonoBehaviour
 {
     [Header("Settings")]
     public GameObject projectilePrefab;
-    public int initialPoolSize = 100;
+    public int initialPoolSize = 250;
 
     [Header("References")]
     public EnemyManager enemyManager;

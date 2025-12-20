@@ -6,28 +6,40 @@ public class EnemySpawner : MonoBehaviour
     public EnemyManager Manager;
     public Transform Player;
 
-    [Header("Spawn Settings")]
+    [Header("Initial Spawn")]
     public int StartCount = 20;
-    public int MaxCount = 100;
-    public float EnemiesPerSecond = 2f;
+    public float StartSpawnRadius = 14f;
+
+    [Header("Enemy Stat Scaling")]
+    public int ExtraHPPerMinute = 2;
+    public int ExtraHPQuadratic = 1;
+    public int MaxHPOnSpawn = 120;
+    public float MoveSpeedPerMinute = 0.15f;
+    public int TouchDamagePerMinute = 1;
+
+    [Header("Spawning")]
     public float SpawnRadius = 25f;
     public bool SpawnInCircle = true;
 
-    [Header("Bursts")]
-    public int BurstAmount = 0;
-    public float BurstInterval = 0f;
+    [Header("Difficulty")]
+    public int BaseMaxCount = 90;
+    public int MaxCountPerMinute = 45;
+
+    public float BaseEnemiesPerSecond = 1.2f;
+    public float EnemiesPerSecondPerMinute = 0.9f;
 
     [Header("Performance")]
-    public int MaxSpawnPerFrame = 32;
+    public int MaxSpawnPerFrame = 24;
 
-    float timePassed;
-    float nextBurstTime;
-    int targetCount;
+    float _timePassed;
+    float _spawnBudget;
+    int _lastMinute = -1;
 
     void Start()
     {
         if (!Manager) Manager = FindFirstObjectByType<EnemyManager>();
         if (!Player) Player = GameObject.FindGameObjectWithTag("Player")?.transform;
+
         if (!Manager || !Player)
         {
             Debug.LogError("EnemySpawner: Missing references");
@@ -35,43 +47,92 @@ public class EnemySpawner : MonoBehaviour
             return;
         }
 
-        timePassed = 0f;
-        nextBurstTime = BurstInterval > 0f ? BurstInterval : Mathf.Infinity;
+        _timePassed = 0f;
+        _spawnBudget = 0f;
 
-        Manager.Prewarm(MaxCount);
-        Manager.SpawnCircleAroundPlayer(StartCount, SpawnRadius);
-        targetCount = StartCount;
+        int prewarm = Mathf.Max(BaseMaxCount, StartCount);
+        Manager.Prewarm(prewarm);
+
+        if (StartCount > 0)
+            SpawnNow(StartCount, StartSpawnRadius);
     }
 
     void Update()
     {
         if (!Manager || !Player) return;
 
-        timePassed += Time.deltaTime;
-        int desiredCount = Mathf.Min(StartCount + Mathf.RoundToInt(EnemiesPerSecond * timePassed), MaxCount);
+        float dt = Time.deltaTime;
+        _timePassed += dt;
 
-        if (BurstAmount > 0 && BurstInterval > 0f && timePassed >= nextBurstTime)
+        int minute = Mathf.FloorToInt(_timePassed / 60f);
+
+        if (minute != _lastMinute)
         {
-            desiredCount = Mathf.Min(desiredCount + BurstAmount, MaxCount);
-            nextBurstTime += BurstInterval;
+            _lastMinute = minute;
+
+            int hp = HPOnSpawn(minute);
+            Manager.CurrentEnemyHPOnSpawn = hp;
+
+            Manager.MoveSpeed =
+                Manager.MoveSpeed + minute * MoveSpeedPerMinute;
+
+            Manager.PlayerTouchDamage =
+                Manager.PlayerTouchDamage + minute * TouchDamagePerMinute;
         }
 
-        int toSpawn = Mathf.Clamp(desiredCount - Manager.AliveCount, 0, MaxSpawnPerFrame);
-        if (toSpawn > 0)
-        {
-            if (SpawnInCircle) Manager.SpawnCircleAroundPlayer(toSpawn, SpawnRadius);
-            else SpawnRandom(toSpawn);
-        }
+        int maxCount = BaseMaxCount + minute * MaxCountPerMinute;
+        float eps = BaseEnemiesPerSecond + minute * EnemiesPerSecondPerMinute;
 
-        targetCount = desiredCount;
+        if (Manager.AliveCount >= maxCount)
+            return;
+
+        _spawnBudget += eps * dt;
+
+        int canSpawn = Mathf.Min(Mathf.FloorToInt(_spawnBudget), MaxSpawnPerFrame);
+        int spaceLeft = maxCount - Manager.AliveCount;
+        int toSpawn = Mathf.Clamp(canSpawn, 0, spaceLeft);
+
+        if (toSpawn <= 0)
+            return;
+
+        SpawnNow(toSpawn, SpawnRadius);
+        _spawnBudget -= toSpawn;
     }
 
-    void SpawnRandom(int count)
+    int HPOnSpawn(int minute)
+    {
+        int baseHP = Mathf.Max(1, Manager ? Manager.EnemyMaxHP : 1);
+
+        int linear = minute * Mathf.Max(0, ExtraHPPerMinute);
+        int quad = (minute * minute) * Mathf.Max(0, ExtraHPQuadratic);
+
+        int hp = baseHP + linear + quad;
+
+        if (MaxHPOnSpawn > 0)
+            hp = Mathf.Min(hp, MaxHPOnSpawn);
+
+        return Mathf.Max(1, hp);
+    }
+
+    void SpawnNow(int count, float radius)
+    {
+        if (SpawnInCircle)
+            Manager.SpawnCircleAroundPlayer(count, radius);
+        else
+            SpawnRandom(count, radius);
+    }
+
+    void SpawnRandom(int count, float radius)
     {
         for (int i = 0; i < count; i++)
         {
-            Vector2 offset = Random.insideUnitCircle * SpawnRadius;
-            Vector3 spawnPos = new Vector3(Player.position.x + offset.x, Player.position.y, Player.position.z + offset.y);
+            Vector2 offset = Random.insideUnitCircle * radius;
+            Vector3 spawnPos = new Vector3(
+                Player.position.x + offset.x,
+                Player.position.y,
+                Player.position.z + offset.y
+            );
+
             Manager.SpawnAt(spawnPos);
         }
     }

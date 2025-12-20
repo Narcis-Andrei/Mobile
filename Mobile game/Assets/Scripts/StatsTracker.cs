@@ -118,7 +118,7 @@ public class StatsTracker : MonoBehaviour
 
             if (projectilesText) projectilesText.text = $"Projectiles: {Mathf.Max(1, playerStats.projectileCount)}";
             if (dashRechargeText) dashRechargeText.text = $"DashRl: {Mathf.Max(0.1f, playerStats.dashRechargeTime):0.00}s";
-            if (critChanceText) critChanceText.text = $"CritChance: {(Mathf.Clamp01(playerStats.critChance) * 100f):0.0}%";
+            if (critChanceText) critChanceText.text = $"CritChance: {(Mathf.Clamp01(playerStats.critChance) * 100f):0.00}%";
             if (critDamageText) critDamageText.text = $"CritDmg: x{Mathf.Max(1f, playerStats.critDamage):0.00}";
         }
 

@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 public class AutoShooter : MonoBehaviour
 {
@@ -16,29 +17,37 @@ public class AutoShooter : MonoBehaviour
 
     float cooldown;
 
-    private void Awake()
+    void Awake()
     {
-        if (!stats) stats = GetComponent<PlayerStats>();
+        if (!stats)
+            stats = GetComponent<PlayerStats>();
     }
 
-    private void Update()
+    void Update()
     {
-        if (!EnameManager || !ProjectileManager) return;
+        if (!EnameManager || !ProjectileManager)
+            return;
 
         cooldown -= Time.deltaTime;
-        if (cooldown > 0f) return;
+        if (cooldown > 0f)
+            return;
 
         Vector3 origin = transform.position;
 
         int shots = stats ? Mathf.Max(1, stats.projectileCount) : 1;
 
-        var used = new System.Collections.Generic.HashSet<int>();
+        HashSet<int> used = new HashSet<int>();
 
         int fired = 0;
 
         for (int i = 0; i < shots; i++)
         {
-            if (!EnameManager.TryGetRandomEnemyWithinRange(origin, Range, used, out var targetPos, out int idx))
+            if (!EnameManager.TryGetNearestEnemyWithinRange(
+                    origin,
+                    Range,
+                    used,
+                    out Vector3 targetPos,
+                    out int idx))
                 break;
 
             used.Add(idx);

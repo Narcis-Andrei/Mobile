@@ -169,7 +169,19 @@ public class ChestRewardMenu : MonoBehaviour
                 return $"-{Mathf.RoundToInt(10 * rarityMult)}% Dash Reload";
 
             case RewardType.CritChance:
-                return $"+{Mathf.RoundToInt(2 * rarityMult)}% Crit Chance";
+                {
+                    float add = rarity switch
+                    {
+                        Rarity.Common => 0.5f,
+                        Rarity.Uncommon => 1f,
+                        Rarity.Rare => 2f,
+                        Rarity.Epic => 3.5f,
+                        Rarity.Legendary => 4f,
+                        _ => 0.5f
+                    };
+
+                    return $"+{add:0.#}% Crit Chance";
+                }
 
             case RewardType.CritDamage:
                 return $"+{Mathf.RoundToInt(15 * rarityMult)}% Crit Damage";

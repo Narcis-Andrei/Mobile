@@ -6988,7 +6988,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   projectilePrefab: {fileID: 5872383638451425562, guid: ca45986522fd543439f7f571a7cb0c30, type: 3}
-  initialPoolSize: 100
+  initialPoolSize: 250
   enemyManager: {fileID: 469509562}
   playerStats: {fileID: 0}
 --- !u!1 &1676450821
@@ -7026,7 +7026,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 120, y: 117}
+  m_AnchoredPosition: {x: 210, y: 145}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0, y: 0}
 --- !u!114 &1676450823

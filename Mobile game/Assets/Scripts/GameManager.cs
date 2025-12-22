@@ -1,6 +1,8 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+#if (UNITY_IOS || UNITY_ANDROID) && !UNITY_EDITOR
 using CandyCoded.HapticFeedback;
+#endif
 
 public class GameManager : MonoBehaviour
 {
@@ -79,7 +81,9 @@ public class GameManager : MonoBehaviour
 
         _runStats?.OnRunEnded();
 
+#if (UNITY_IOS || UNITY_ANDROID) && !UNITY_EDITOR
         HapticFeedback.HeavyFeedback();
+#endif
 
         Time.timeScale = 0f;
 

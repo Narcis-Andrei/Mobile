@@ -1,5 +1,7 @@
 using UnityEngine;
+#if (UNITY_IOS || UNITY_ANDROID) && !UNITY_EDITOR
 using CandyCoded.HapticFeedback;
+#endif
 
 public class DashController : MonoBehaviour
 {
@@ -85,7 +87,9 @@ public class DashController : MonoBehaviour
         float cdMult = _stats ? _stats.dashCooldownMultiplier : 1f;
         _cooldownTimer = Mathf.Max(0.01f, dashCooldown * cdMult);
 
+#if (UNITY_IOS || UNITY_ANDROID) && !UNITY_EDITOR
         HapticFeedback.MediumFeedback();
+#endif
         if (dashEffect) dashEffect.Play();
         if (dashSound) dashSound.Play();
     }

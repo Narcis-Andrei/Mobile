@@ -50,6 +50,13 @@ public class AccelormeterFlick : MonoBehaviour
     {
         if (enablePhoneFlick) UpdateAccelerometer();
         if (enableSwipe) UpdateSwipe();
+
+#if UNITY_WEBGL || UNITY_STANDALONE
+        if (Input.GetMouseButtonDown(0))
+        {
+            Emit(FlickDir.Up, Vector3.zero);
+        }
+#endif
     }
 
     void UpdateAccelerometer()

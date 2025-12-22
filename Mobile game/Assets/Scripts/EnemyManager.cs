@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
+#if (UNITY_IOS || UNITY_ANDROID) && !UNITY_EDITOR
 using CandyCoded.HapticFeedback;
+#endif
 
 public class EnemyManager : MonoBehaviour
 {
@@ -287,7 +289,9 @@ public class EnemyManager : MonoBehaviour
                 {
                     _nextTouchDamageTime[i] = now + TouchDamageCooldown;
                     _playerHealth.TakeDamage(PlayerTouchDamage);
+#if (UNITY_IOS || UNITY_ANDROID) && !UNITY_EDITOR
                     HapticFeedback.LightFeedback();
+#endif
                 }
             }
 

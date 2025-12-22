@@ -1,5 +1,7 @@
 using UnityEngine;
+#if (UNITY_IOS || UNITY_ANDROID) && !UNITY_EDITOR
 using CandyCoded.HapticFeedback;
+#endif
 
 public class Chest : MonoBehaviour
 {
@@ -25,7 +27,9 @@ public class Chest : MonoBehaviour
 
         if (GameManager.Instance) GameManager.Instance.ShowCollectablesMenu();
 
+#if (UNITY_IOS || UNITY_ANDROID) && !UNITY_EDITOR
         HapticFeedback.LightFeedback();
+#endif
 
         if (deactivate) gameObject.SetActive(false);
         else Destroy(gameObject);

@@ -112,14 +112,14 @@ public class StatsTracker : MonoBehaviour
 
         if (playerStats)
         {
-            if (moveSpeedText) moveSpeedText.text = $"Move: x{playerStats.moveSpeedMultiplier:0.00}";
-            if (fireRateText) fireRateText.text = $"Fire: x{playerStats.fireRateMultiplier:0.00}";
-            if (dashCooldownText) dashCooldownText.text = $"Dash CD: x{playerStats.dashCooldownMultiplier:0.00}";
+            if (moveSpeedText) moveSpeedText.text = $"x{playerStats.moveSpeedMultiplier:0.00}";
+            if (fireRateText) fireRateText.text = $"x{playerStats.fireRateMultiplier:0.00}";
+            if (dashCooldownText) dashCooldownText.text = $"x{playerStats.dashCooldownMultiplier:0.00}";
 
-            if (projectilesText) projectilesText.text = $"Projectiles: {Mathf.Max(1, playerStats.projectileCount)}";
-            if (dashRechargeText) dashRechargeText.text = $"DashRl: {Mathf.Max(0.1f, playerStats.dashRechargeTime):0.00}s";
-            if (critChanceText) critChanceText.text = $"CritChance: {(Mathf.Clamp01(playerStats.critChance) * 100f):0.00}%";
-            if (critDamageText) critDamageText.text = $"CritDmg: x{Mathf.Max(1f, playerStats.critDamage):0.00}";
+            if (projectilesText) projectilesText.text = $"{Mathf.Max(1, playerStats.projectileCount)}";
+            if (dashRechargeText) dashRechargeText.text = $"{Mathf.Max(0.1f, playerStats.dashRechargeTime):0.00}s";
+            if (critChanceText) critChanceText.text = $"{(Mathf.Clamp01(playerStats.critChance) * 100f):0.00}%";
+            if (critDamageText) critDamageText.text = $"x{Mathf.Max(1f, playerStats.critDamage):0.00}";
         }
 
         if (dashesText)

@@ -31,7 +31,8 @@ Transform:
   m_LocalPosition: {x: 0, y: 2.19, z: 0}
   m_LocalScale: {x: 0.11943, y: 0.11042713, z: 0.8701338}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 7885694575195257055}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &819810122212106945
@@ -49,7 +50,7 @@ MeshRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5872383638451425562}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
@@ -62,6 +63,8 @@ MeshRenderer:
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
   m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -83,6 +86,7 @@ MeshRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
@@ -108,3 +112,81 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!1001 &7702602401290755892
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 2662229713188445199}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: e5f0d2f52ddf1e8478b529f24bcdd43d, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 1.1515802
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: e5f0d2f52ddf1e8478b529f24bcdd43d, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.7766219
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: e5f0d2f52ddf1e8478b529f24bcdd43d, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 1.097892
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: e5f0d2f52ddf1e8478b529f24bcdd43d, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.37661
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: e5f0d2f52ddf1e8478b529f24bcdd43d, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.76
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: e5f0d2f52ddf1e8478b529f24bcdd43d, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 1.66
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: e5f0d2f52ddf1e8478b529f24bcdd43d, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: e5f0d2f52ddf1e8478b529f24bcdd43d, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: e5f0d2f52ddf1e8478b529f24bcdd43d, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: e5f0d2f52ddf1e8478b529f24bcdd43d, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: e5f0d2f52ddf1e8478b529f24bcdd43d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: e5f0d2f52ddf1e8478b529f24bcdd43d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: e5f0d2f52ddf1e8478b529f24bcdd43d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -7511558181221131132, guid: e5f0d2f52ddf1e8478b529f24bcdd43d, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: da3f7f0ce4c75c5408663dcf9121fb1f, type: 2}
+    - target: {fileID: 919132149155446097, guid: e5f0d2f52ddf1e8478b529f24bcdd43d, type: 3}
+      propertyPath: m_Name
+      value: Bolita fuego pintada 01
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: e5f0d2f52ddf1e8478b529f24bcdd43d, type: 3}
+--- !u!4 &7885694575195257055 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: e5f0d2f52ddf1e8478b529f24bcdd43d, type: 3}
+  m_PrefabInstance: {fileID: 7702602401290755892}
+  m_PrefabAsset: {fileID: 0}

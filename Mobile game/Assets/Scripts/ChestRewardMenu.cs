@@ -49,6 +49,7 @@ public class ChestRewardMenu : MonoBehaviour
         revealed = false;
         ClearUI();
         RollThreeOptionsUnique();
+        FindFirstObjectByType<RewardedAdsButton>()?.LoadAd();
     }
     public void OpenChests()
     {
@@ -208,6 +209,19 @@ public class ChestRewardMenu : MonoBehaviour
             if (options[i].button)
                 options[i].button.interactable = true;
         }
+    }
+
+    public void Reroll()
+    {
+        if (GameManager.Instance == null) return;
+
+        if (GameManager.Instance.RerollUsed) return;
+
+        GameManager.Instance.MarkRerollUsed();
+
+        revealed = false;
+        ClearUI();
+        RollThreeOptionsUnique();
     }
 
     public void Choose(int index)

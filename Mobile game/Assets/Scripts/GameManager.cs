@@ -23,10 +23,13 @@ public class GameManager : MonoBehaviour
     private enum GameState { Playing, Paused, Dead }
     private GameState _state = GameState.Playing;
     private bool _collectablesOpen = false;
-    private bool _rewardRevealed = false;
+    private bool _rerollUsed = false;
     private bool _pauseBySettings = false;
     private StatsTracker _runStats;
 
+    public bool RerollUsed => _rerollUsed;
+    public void ResetReroll() => _rerollUsed = false;
+    public void MarkRerollUsed() => _rerollUsed = true;
     public bool IsCollectablesOpen => _collectablesOpen;
 
 
@@ -181,7 +184,7 @@ public class GameManager : MonoBehaviour
         if (collectablesMenu) collectablesMenu.SetActive(true);
         _collectablesOpen = true;
 
-        _rewardRevealed = false;
+        ResetReroll();
         collectablesMenu?.GetComponentInChildren<ChestRewardMenu>(true)?.OnMenuOpened();
 
         if (pauseOnCollect) Time.timeScale = 0f;
@@ -193,7 +196,7 @@ public class GameManager : MonoBehaviour
 
         if (collectablesMenu) collectablesMenu.SetActive(false);
         _collectablesOpen = false;
-        _rewardRevealed = false;
+        ResetReroll();
 
         if (pauseOnCollect && _state == GameState.Playing)
             Time.timeScale = 1f;

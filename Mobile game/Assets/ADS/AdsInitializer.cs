@@ -43,6 +43,7 @@ public class AdsInitializer : MonoBehaviour, IUnityAdsInitializationListener
         if (!banner) banner = GetComponent<BannerAd>();
 
         interstitial?.LoadAd();
+        banner?.LoadBanner();
     }
 
     public void OnInitializationFailed(UnityAdsInitializationError error, string message)

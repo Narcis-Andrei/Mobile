@@ -1,104 +1,79 @@
 using UnityEngine;
-using UnityEngine.UI;
 using UnityEngine.Advertisements;
 
 public class BannerAd : MonoBehaviour
 {
-    // For the purpose of this example, these buttons are for functionality testing:
-    [SerializeField] Button _loadBannerButton;
-    [SerializeField] Button _showBannerButton;
+    [SerializeField] private BannerPosition _bannerPosition = BannerPosition.BOTTOM_CENTER;
 
-    [SerializeField] BannerPosition _bannerPosition = BannerPosition.BOTTOM_CENTER;
+    [SerializeField] private string _androidAdUnitId = "Banner_Android";
+    [SerializeField] private string _iOSAdUnitId = "Banner_iOS";
 
-    [SerializeField] string _androidAdUnitId = "Banner_Android";
-    [SerializeField] string _iOSAdUnitId = "Banner_iOS";
-    string _adUnitId = null; // This will remain null for unsupported platforms.
+    private string _adUnitId;
+    private bool _isLoaded;
 
-    void Start()
+    void Awake()
     {
-        // Get the Ad Unit ID for the current platform:
-#if UNITY_IOS
-    _adUnitId = _iOSAdUnitId;
-#elif UNITY_ANDROID
-        _adUnitId = _androidAdUnitId;
-#elif UNITY_EDITOR
-        _adUnitId = _androidAdUnitId;
-#endif
+        _adUnitId = GetAdUnitIdForCurrentPlatform();
 
-        // Disable the button until an ad is ready to show:
-        _showBannerButton.interactable = false;
+        if (string.IsNullOrEmpty(_adUnitId))
+        {
+            Debug.LogWarning("BannerAd: No Ad Unit Id for this platform.");
+            return;
+        }
 
-        // Set the banner position:
         Advertisement.Banner.SetPosition(_bannerPosition);
-
-        // Configure the Load Banner button to call the LoadBanner() method when clicked:
-        _loadBannerButton.onClick.AddListener(LoadBanner);
-        _loadBannerButton.interactable = true;
     }
 
-    // Implement a method to call when the Load Banner button is clicked:
+    private string GetAdUnitIdForCurrentPlatform()
+    {
+        // These references happen at runtime, so both serialized fields are "used"
+        // and CS0414 warnings go away.
+        return Application.platform switch
+        {
+            RuntimePlatform.IPhonePlayer => _iOSAdUnitId,
+            RuntimePlatform.Android => _androidAdUnitId,
+            RuntimePlatform.OSXEditor => _androidAdUnitId,
+            RuntimePlatform.WindowsEditor => _androidAdUnitId,
+            _ => null
+        };
+    }
+
     public void LoadBanner()
     {
-        // Set up options to notify the SDK of load events:
-        BannerLoadOptions options = new BannerLoadOptions
+        if (string.IsNullOrEmpty(_adUnitId)) return;
+        if (_isLoaded) return;
+
+        Advertisement.Banner.Load(_adUnitId, new BannerLoadOptions
         {
-            loadCallback = OnBannerLoaded,
-            errorCallback = OnBannerError
-        };
-
-        // Load the Ad Unit with banner content:
-        Advertisement.Banner.Load(_adUnitId, options);
+            loadCallback = () =>
+            {
+                _isLoaded = true;
+                Debug.Log("BannerAd: Banner loaded");
+                ShowBanner();
+            },
+            errorCallback = (msg) =>
+            {
+                _isLoaded = false;
+                Debug.LogWarning("BannerAd: Banner load error: " + msg);
+            }
+        });
     }
 
-    // Implement code to execute when the loadCallback event triggers:
-    void OnBannerLoaded()
+    public void ShowBanner()
     {
-        Debug.Log("Banner loaded");
+        if (string.IsNullOrEmpty(_adUnitId)) return;
 
-        // Configure the Show Banner button to call the ShowBannerAd() method when clicked:
-        _showBannerButton.onClick.AddListener(ShowBannerAd);
-
-        // Enable both buttons:
-        _showBannerButton.interactable = true;
-    }
-
-    // Implement code to execute when the load errorCallback event triggers:
-    void OnBannerError(string message)
-    {
-        Debug.Log($"Banner Error: {message}");
-        // Optionally execute additional code, such as attempting to load another ad.
-    }
-
-    // Implement a method to call when the Show Banner button is clicked:
-    void ShowBannerAd()
-    {
-        // Set up options to notify the SDK of show events:
-        BannerOptions options = new BannerOptions
+        if (!_isLoaded)
         {
-            clickCallback = OnBannerClicked,
-            hideCallback = OnBannerHidden,
-            showCallback = OnBannerShown
-        };
+            LoadBanner(); // will auto-show after loaded
+            return;
+        }
 
-        // Show the loaded Banner Ad Unit:
-        Advertisement.Banner.Show(_adUnitId, options);
+        Advertisement.Banner.Show(_adUnitId);
     }
 
-    // Implement a method to call when the Hide Banner button is clicked:
-    void HideBannerAd()
+    public void HideBanner()
     {
-        // Hide the banner:
         Advertisement.Banner.Hide();
-    }
-
-    void OnBannerClicked() { }
-    void OnBannerShown() { }
-    void OnBannerHidden() { }
-
-    void OnDestroy()
-    {
-        // Clean up the listeners:
-        _loadBannerButton.onClick.RemoveAllListeners();
-        _showBannerButton.onClick.RemoveAllListeners();
     }
 }

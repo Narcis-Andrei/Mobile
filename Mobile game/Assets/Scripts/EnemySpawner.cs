@@ -99,6 +99,7 @@ public class EnemySpawner : MonoBehaviour
         _spawnBudget -= toSpawn;
     }
 
+    // Calculates enemy HP using both linear and quadratic scaling
     int HPOnSpawn(int minute)
     {
         int baseHP = Mathf.Max(1, Manager ? Manager.EnemyMaxHP : 1);

@@ -80,6 +80,7 @@ public class ChestRewardMenu : MonoBehaviour
         }
     }
 
+    // Rolls three rewards and prevents duplicates
     void RollThreeOptionsUnique()
     {
         var all = (RewardType[])System.Enum.GetValues(typeof(RewardType));
@@ -88,6 +89,7 @@ public class ChestRewardMenu : MonoBehaviour
         {
             RewardType type;
             int guard = 0;
+            // Reroll if it matches previously chosen reward
             do
             {
                 type = all[Random.Range(0, all.Length)];
@@ -100,6 +102,7 @@ public class ChestRewardMenu : MonoBehaviour
         }
     }
 
+    // Weighted rarity roll
     Rarity RollRarity()
     {
         float total = wCommon + wUncommon + wRare + wEpic + wLegendary;

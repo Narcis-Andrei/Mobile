@@ -54,6 +54,7 @@ public class GameManager : MonoBehaviour
 
     private void Update()
     {
+        // Detect death during active play
         if (_state == GameState.Playing && player != null && player.CurrentHP <= 0)
             HandlePlayerDied();
 
@@ -79,14 +80,17 @@ public class GameManager : MonoBehaviour
         if (_state == GameState.Dead) return;
         _state = GameState.Dead;
 
+        // Save run results best time and best kills
         _runStats?.OnRunEnded();
 
 #if (UNITY_IOS || UNITY_ANDROID) && !UNITY_EDITOR
         HapticFeedback.HeavyFeedback();
 #endif
 
+        // Freaze gameplay
         Time.timeScale = 0f;
 
+        // Switch UI to death screen
         SetMenus(
             playerUiOn: false,
             pauseOn: false,
@@ -184,13 +188,18 @@ public class GameManager : MonoBehaviour
     {
         if (_state == GameState.Dead) return;
 
+        // Hide all gameplay menus and show chest UI
         SetMenus(false, false, false, false);
         if (collectablesMenu) collectablesMenu.SetActive(true);
         _collectablesOpen = true;
 
+        // Reset reroll for the chest interaction
         ResetReroll();
+
+        // communicate with the chest UI to generate the options
         collectablesMenu?.GetComponentInChildren<ChestRewardMenu>(true)?.OnMenuOpened();
 
+        // Pause while choosing upgrades
         if (pauseOnCollect) Time.timeScale = 0f;
     }
 

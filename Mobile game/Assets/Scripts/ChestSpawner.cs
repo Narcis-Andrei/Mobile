@@ -31,12 +31,15 @@ public class ChestSpawner : MonoBehaviour
 
         _timePassed += Time.deltaTime;
 
+        // If a chest is active do nothing
         if (_active != null && _active.activeInHierarchy)
             return;
 
+        // If the old chest was destroyed clear the reference
         if (_active != null && !_active.activeInHierarchy)
             _active = null;
 
+        // Respawn timer
         _timer -= Time.deltaTime;
         if (_timer <= 0f)
         {
@@ -47,10 +50,14 @@ public class ChestSpawner : MonoBehaviour
 
     private void Spawn()
     {
+        // Convert time survived to minutes
         float minutes = _timePassed / 60f;
+        // t moves from 0 to 1 as time approaches minutesToMaxRadius
         float t = minutesToMaxRadius <= 0f ? 1f : Mathf.Clamp01(minutes / minutesToMaxRadius);
+        // Radius smoothly increases over time
         float radius = Mathf.Lerp(spawnRadiusMin, spawnRadiusMax, t);
 
+        // Pick a random direction and spawn chest at that radius from the player
         Vector2 dir = Random.insideUnitCircle.normalized;
         Vector3 pos = player.position + new Vector3(dir.x, 0f, dir.y) * radius;
 

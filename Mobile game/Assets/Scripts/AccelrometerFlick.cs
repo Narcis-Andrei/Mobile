@@ -3,24 +3,35 @@ using UnityEngine.Events;
 
 public enum FlickDir { None, Left, Right, Up, Down }
 
+// Converts mobile input into a camera relative dash direction.
 public class AccelormeterFlick : MonoBehaviour
 {
+    // Events allow this script to stay deatatched from the dash logic
+    // It only outputs a direction and another script uses that direction
     [System.Serializable] public class Vector3Event : UnityEvent<Vector3> { }
     [System.Serializable] public class FlickEvent : UnityEvent<FlickDir> { }
 
     [Header("Output")]
+    // World space direction for dash
     public Vector3Event onDash;
+    // Used for UI/chest interactio
     public FlickEvent onFlick;
 
     [Header("Reference")]
+    // Used to map input to camera direction
     public Camera referenceCamera;
 
     [Header("Accelerometer Flick")]
     public bool enablePhoneFlick = true;
 
+    // Threshold needs to be exceeded to cont as a flick
     public float accelerationTreshhold = 0.6f;
+
+    // Cooldown prevents multiple triggers from a shake
     public float acceleratioCooldown = 0.2f;
+    // Smoothing reduces noisy sensor spikes
     [Range(0f, 1f)] public float accelerationSmoothing = 0.05f;
+    // Bies prevents diagonal movement from being detected as both directions
     [Range(0f, 1f)] public float accelerationDirectionalBias = 0.5f;
     public bool detectWhenPause = true;
 
@@ -61,8 +72,7 @@ public class AccelormeterFlick : MonoBehaviour
 
     void UpdateAccelerometer()
     {
-        float dt = detectWhenPause ? Mathf.Max(Time.unscaledDeltaTime, 1e-4f)
-                                    : Mathf.Max(Time.deltaTime, 1e-4f);
+        float dt = detectWhenPause ? Mathf.Max(Time.unscaledDeltaTime, 1e-4f) : Mathf.Max(Time.deltaTime, 1e-4f);
         _sinceAccel += dt;
 
         Vector3 a = GetWorldLinearAcceleration(dt);
@@ -71,8 +81,13 @@ public class AccelormeterFlick : MonoBehaviour
         Transform cam = referenceCamera ? referenceCamera.transform : null;
         Vector3 right = cam ? cam.right : Vector3.right;
         Vector3 fwd = cam ? cam.forward : Vector3.forward;
-        right.y = 0f; fwd.y = 0f; right.Normalize(); fwd.Normalize();
+        // Flatten on XZ so the direction stays horizontal
+        right.y = 0f;
+        fwd.y = 0f;
+        right.Normalize();
+        fwd.Normalize();
 
+        // Project acceleration into camera space
         float x = Vector3.Dot(a, right);
         x = -x;
         float z = Vector3.Dot(a, fwd);
@@ -85,9 +100,12 @@ public class AccelormeterFlick : MonoBehaviour
         ax = Mathf.Abs(x); az = Mathf.Abs(z);
 #endif
 
+        // Prevent repeated triggers from happening quickly
         if (_sinceAccel < acceleratioCooldown) return;
+        // Ignore small motion below threshold
         if (ax < accelerationTreshhold && az < accelerationTreshhold) return;
 
+        // Choose the dominant axis so flicks feel intentional
         if (ax > az * (1f + accelerationDirectionalBias))
         {
             Emit(x > 0f ? FlickDir.Right : FlickDir.Left, x > 0f ? right : -right);
@@ -96,7 +114,6 @@ public class AccelormeterFlick : MonoBehaviour
         {
             Emit(z > 0f ? FlickDir.Up : FlickDir.Down, z > 0f ? fwd : -fwd);
         }
-        // else too diagonal -> ignore
     }
 
     Vector3 GetWorldLinearAcceleration(float dt)
@@ -148,7 +165,9 @@ public class AccelormeterFlick : MonoBehaviour
 
     void EvaluateSwipe(Vector2 start, Vector2 end, float dt)
     {
+        // Reject aany slow swipes
         if (dt > maxSwipeTime) return;
+        // Reject any short swipes
         Vector2 delta = end - start;
         if (delta.sqrMagnitude < minSwipePix * minSwipePix) return;
 
@@ -159,8 +178,12 @@ public class AccelormeterFlick : MonoBehaviour
         Transform cam = referenceCamera ? referenceCamera.transform : null;
         Vector3 right = cam ? cam.right : Vector3.right;
         Vector3 fwd = cam ? cam.forward : Vector3.forward;
-        right.y = 0f; fwd.y = 0f; right.Normalize(); fwd.Normalize();
+        right.y = 0f;
+        fwd.y = 0f;
+        right.Normalize();
+        fwd.Normalize();
 
+        // Convert swipe direction into world direction
         if (Mathf.Abs(nd.x) > Mathf.Abs(nd.y))
         {
             dir = nd.x > 0f ? FlickDir.Right : FlickDir.Left;
@@ -175,6 +198,7 @@ public class AccelormeterFlick : MonoBehaviour
         Emit(dir, world);
     }
 
+    // Emits a flick direction event and a dash direction and this keeps input and movement systems separated
     void Emit(FlickDir dir, Vector3 worldDash)
     {
         _sinceAccel = 0f;

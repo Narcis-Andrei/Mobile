@@ -32,6 +32,7 @@ public class StatsTracker : MonoBehaviour
     public int Kills { get; private set; }
     public float TimeSurvived { get; private set; }
 
+    // PlayerPrefs keys for persistent stats
     const string AttemptsKey = "Attempts";
     const string BestTimeKey = "BestTime";
     const string BestKillsKey = "BestKills";
@@ -42,9 +43,11 @@ public class StatsTracker : MonoBehaviour
 
     void Awake()
     {
+        // Increment attempts every time the game starts
         attempts = PlayerPrefs.GetInt(AttemptsKey, 0) + 1;
         PlayerPrefs.SetInt(AttemptsKey, attempts);
 
+        // Load best values
         bestTime = PlayerPrefs.GetFloat(BestTimeKey, 0f);
         bestKills = PlayerPrefs.GetInt(BestKillsKey, 0);
 
@@ -77,10 +80,12 @@ public class StatsTracker : MonoBehaviour
         RefreshUI();
     }
 
+    // Call when the player id dead
     public void OnRunEnded()
     {
         bool newBest = false;
 
+        // Save new best time
         if (TimeSurvived > bestTime)
         {
             bestTime = TimeSurvived;
@@ -88,6 +93,7 @@ public class StatsTracker : MonoBehaviour
             newBest = true;
         }
 
+        // Save new best kill count
         if (Kills > bestKills)
         {
             bestKills = Kills;
@@ -95,6 +101,7 @@ public class StatsTracker : MonoBehaviour
             newBest = true;
         }
 
+        // SAve if changed
         if (newBest) PlayerPrefs.Save();
 
         RefreshUI();

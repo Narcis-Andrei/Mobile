@@ -17,6 +17,7 @@ public class PlayerStats : MonoBehaviour
 
     public void ApplyReward(RewardType reward, Rarity rarity, PlayerHealth health)
     {
+        // Convert rarity into a scaling multiplier
         float rarityMult = rarity switch
         {
             Rarity.Common => 1f,
@@ -47,6 +48,7 @@ public class PlayerStats : MonoBehaviour
 
             case RewardType.FireRate:
                 {
+                    // Fire rate scales multiplicatively so upgrades stack corectly
                     float baseBonus = 0.10f;
                     fireRateMultiplier *= (1f + baseBonus * rarityMult);
                     break;
@@ -68,6 +70,7 @@ public class PlayerStats : MonoBehaviour
 
             case RewardType.Projectiles:
                 {
+                    // Projectile count increases more at higher rarities
                     int add = rarity switch
                     {
                         Rarity.Common => 1,
@@ -91,6 +94,7 @@ public class PlayerStats : MonoBehaviour
 
             case RewardType.CritChance:
                 {
+                    // Crit chance adds are small and clamped
                     float add = rarity switch
                     {
                         Rarity.Common => 0.005f,

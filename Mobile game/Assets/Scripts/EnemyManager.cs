@@ -50,11 +50,18 @@ public class EnemyManager : MonoBehaviour
     private readonly List<Transform> _hpFill = new();
     private readonly List<float> _nextTouchDamageTime = new();
 
+    // Active enemy data is stored in parallel lists instead of individual scripts
+    // This avoids having many Update() calls and improves mobile performance
     private readonly List<Transform> _transforms = new();
     private readonly List<Vector3> _positions = new();
     private readonly List<Quaternion> _rotations = new();
+
+    // Object pool used to recycle enemy instances instead of instantiating at runtime.
+    // This reduces CPU spikes.
     private readonly Stack<Transform> _pool = new();
 
+    // Spatial partitioning grid used to limit neighbour checks
+    // This prevents lag with large enemy counts.
     private readonly Dictionary<(int x, int z), List<int>> _grid = new(1024);
 
     void Awake()
@@ -109,17 +116,20 @@ public class EnemyManager : MonoBehaviour
         return false;
     }
 
+    // Pre create enemy objects at the start of the game to avoid instantiating during gameplay
     public void Prewarm(int count)
     {
         for (int i = 0; i < count; i++) _pool.Push(CreatePooled());
     }
 
+    // Spawns an enemy using pooled instances
     public Transform SpawnAt(Vector3 position)
     {
         Transform t = _pool.Count > 0 ? _pool.Pop() : CreatePooled();
         t.gameObject.SetActive(true);
         t.SetPositionAndRotation(position, Quaternion.identity);
 
+        // Store enemy state in central lists
         _transforms.Add(t);
         _positions.Add(position);
         _rotations.Add(Quaternion.identity);
@@ -154,12 +164,14 @@ public class EnemyManager : MonoBehaviour
         }
     }
 
+    // Removes an enemy and returns it to the pool
     public void DespawnAt(int index)
     {
         var t = _transforms[index];
         t.gameObject.SetActive(false);
         _pool.Push(t);
 
+        // Swap-with-last removal to avoid shifting lists
         int last = _transforms.Count - 1;
         if (index != last)
         {
@@ -228,17 +240,22 @@ public class EnemyManager : MonoBehaviour
                 else desireDir = -(toPlayerXZ / Mathf.Max(0.001f, toPlayerLen));
             }
 
+            // Separation force pushes enemies away from nearby neighbours
             Vector3 separationDir = Vector3.zero;
             int neighborCount = 0;
 
+            // Determine which grid cell the enemy is
             int cellX = Mathf.FloorToInt(pos.x * invCellSize);
             int cellZ = Mathf.FloorToInt(pos.z * invCellSize);
 
+            // Check this cell and the 8 surrounding cells
             for (int dz = -1; dz <= 1; dz++)
             {
                 for (int dx = -1; dx <= 1; dx++)
                 {
+                    // Skip if the cell has no neighbour
                     if (!_grid.TryGetValue((cellX + dx, cellZ + dz), out var indices)) continue;
+                    // Iterate through agents in the neighboring cell
                     for (int n = 0; n < indices.Count; n++)
                     {
                         int j = indices[n];
@@ -249,14 +266,17 @@ public class EnemyManager : MonoBehaviour
                         float offsetZ = neighborPos.z - pos.z;
                         float distSqr = offsetX * offsetX + offsetZ * offsetZ;
 
+                        // Only apply separation if within radius and not overlapping
                         if (distSqr < sepRadiusSqr && distSqr > 1e-8f)
                         {
                             float invDist = 1f / Mathf.Sqrt(distSqr);
                             float dist = Mathf.Sqrt(distSqr);
                             float weight = 1f - (dist / sepRadius);
+                            // Push away from neighbor
                             separationDir.x -= offsetX * invDist * weight;
                             separationDir.z -= offsetZ * invDist * weight;
 
+                            // Stop early if max neighbors reached
                             if (++neighborCount >= MaxNeighbors) break;
                         }
                     }
@@ -285,6 +305,7 @@ public class EnemyManager : MonoBehaviour
                 float dz = playerPos.z - pos.z;
                 float distSqr = dx * dx + dz * dz;
 
+                // Applies contact damage with a cooldown
                 if (distSqr <= touchR2 && now >= _nextTouchDamageTime[i])
                 {
                     _nextTouchDamageTime[i] = now + TouchDamageCooldown;
@@ -302,6 +323,7 @@ public class EnemyManager : MonoBehaviour
             _transforms[i].SetPositionAndRotation(_positions[i], _rotations[i]);
     }
 
+    // Creates a pooled enemy instance in a disabled state
     Transform CreatePooled()
     {
         var t = Instantiate(EnemyPrefab).transform;

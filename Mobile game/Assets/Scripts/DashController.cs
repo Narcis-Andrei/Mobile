@@ -34,6 +34,7 @@ public class DashController : MonoBehaviour
         _rechargeTimer = 0f;
     }
 
+    // Regenerates dash charges over time
     void Update()
     {
         if (_cooldownTimer > 0f)
@@ -94,6 +95,7 @@ public class DashController : MonoBehaviour
         if (dashSound) dashSound.Play();
     }
 
+    // Moves the player over a short duration using a speed curve
     private System.Collections.IEnumerator DashRoutine(Vector3 dir, float power)
     {
         _isDashing = true;
@@ -108,6 +110,7 @@ public class DashController : MonoBehaviour
         {
             elapsed += Time.fixedDeltaTime;
             float t = Mathf.Clamp01(elapsed / dashDuration);
+            // Speed curve controls dash feel
             float curve = speedCurve != null ? speedCurve.Evaluate(t) : 1f;
 
             Vector3 step = dir * (dashSpeed * power * curve * Time.fixedDeltaTime);
